@@ -21,14 +21,15 @@ public class Emulator : MonoBehaviour
     public int ThreadCyclesQueued;
 
     public RawImage screen;
-    public uint[] DisplayBuffer = new uint[240 * 160];
-    public Color32[] DisplayColorBuffer = new Color32[240 * 160];
+    uint[] DisplayBuffer = new uint[240 * 160];
+    Color32[] DisplayColorBuffer = new Color32[240 * 160];
 
     public bool ShowBackBuf = false;
     public bool RunEmulator;
+    public bool BootBIOS = false;
     bool RomLoaded = false;
 
-    Gba Gba;
+    Gba gba;
     Thread EmulationThread;
     AutoResetEvent ThreadSync = new AutoResetEvent(false);
 
@@ -41,8 +42,8 @@ public class Emulator : MonoBehaviour
     void Start()
     {
         byte[] bios = System.IO.File.ReadAllBytes(Path.Combine(Application.streamingAssetsPath, "gba_bios.bin"));
-        Gba = new Gba(new ProviderGba(bios, new byte[0], "", AudioReady) { BootBios = true });
-
+        gba = new Gba(new ProviderGba(bios, new byte[0], "", AudioReady) { BootBios = true });
+        gba.Provider.BootBios = BootBIOS;
         EmulationThread = new Thread(EmulationThreadHandler);
         EmulationThread.Name = "Emulation Core";
         EmulationThread.Start();
@@ -100,16 +101,16 @@ public class Emulator : MonoBehaviour
 
     public void LoadRomAndSave(byte[] rom, byte[] sav, string savPath)
     {
-        var bios = Gba.Provider.Bios;
-        Gba = new Gba(new ProviderGba(bios, rom, savPath, AudioReady) { BootBios = true });
-        Gba.Mem.SaveProvider.LoadSave(sav);
+        var bios = gba.Provider.Bios;
+        gba = new Gba(new ProviderGba(bios, rom, savPath, AudioReady) { BootBios = true });
+        gba.Mem.SaveProvider.LoadSave(sav);
     }
     public void ResetGba()
     {
-        byte[] save = Gba.Mem.SaveProvider.GetSave();
-        ProviderGba p = Gba.Provider;
-        Gba = new Gba(p);
-        Gba.Mem.SaveProvider.LoadSave(save);
+        byte[] save = gba.Mem.SaveProvider.GetSave();
+        ProviderGba p = gba.Provider;
+        gba = new Gba(p);
+        gba.Mem.SaveProvider.LoadSave(save);
     }
 
     public void EmulationThreadHandler()
@@ -128,14 +129,14 @@ public class Emulator : MonoBehaviour
             ThreadSync.WaitOne();
 
             int cyclesLeft = 70224 * 4;
-            while (cyclesLeft > 0 && !Gba.Cpu.Errored)
+            while (cyclesLeft > 0 && !gba.Cpu.Errored)
             {
-                cyclesLeft -= (int)Gba.Step();
+                cyclesLeft -= (int)gba.Step();
             }
 
-            while (!SyncToAudio && !Gba.Cpu.Errored && RunEmulator)
+            while (!SyncToAudio && !gba.Cpu.Errored && RunEmulator)
             {
-                Gba.Step();
+                gba.Step();
                 ThreadCyclesQueued = 0;
             }
         }
@@ -162,9 +163,9 @@ public class Emulator : MonoBehaviour
 
     public void RunCycles(int cycles)
     {
-        while (cycles > 0 && !Gba.Cpu.Errored && RunEmulator)
+        while (cycles > 0 && !gba.Cpu.Errored && RunEmulator)
         {
-            cycles -= (int)Gba.Step();
+            cycles -= (int)gba.Step();
         }
     }
 
@@ -172,18 +173,18 @@ public class Emulator : MonoBehaviour
     public void RunFrame()
     {
         CyclesLeft += FrameCycles;
-        while (CyclesLeft > 0 && !Gba.Cpu.Errored)
+        while (CyclesLeft > 0 && !gba.Cpu.Errored)
         {
-            CyclesLeft -= (int)Gba.Step();
+            CyclesLeft -= (int)gba.Step();
         }
     }
 
     public void RunScanline()
     {
         CyclesLeft += ScanlineCycles;
-        while (CyclesLeft > 0 && !Gba.Cpu.Errored)
+        while (CyclesLeft > 0 && !gba.Cpu.Errored)
         {
-            CyclesLeft -= (int)Gba.Step();
+            CyclesLeft -= (int)gba.Step();
         }
     }
 
@@ -197,18 +198,18 @@ public class Emulator : MonoBehaviour
     public void OnUpdateFrame()
     {
 
-        Gba.Keypad.B = Input.GetKeyDown(KeyCode.Z);
-        Gba.Keypad.A = Input.GetKeyDown(KeyCode.X);
-        Gba.Keypad.Left = Input.GetKeyDown(KeyCode.LeftArrow);
-        Gba.Keypad.Up = Input.GetKeyDown(KeyCode.UpArrow);
-        Gba.Keypad.Right = Input.GetKeyDown(KeyCode.RightArrow);
-        Gba.Keypad.Down = Input.GetKeyDown(KeyCode.DownArrow);
-        Gba.Keypad.Start = Input.GetKeyDown(KeyCode.KeypadEnter);
-        Gba.Keypad.Select = Input.GetKeyDown(KeyCode.Backspace);
-        Gba.Keypad.L = Input.GetKeyDown(KeyCode.Q);
-        Gba.Keypad.R = Input.GetKeyDown(KeyCode.E);
+        gba.Keypad.B = Input.GetKey(KeyCode.Z);
+        gba.Keypad.A = Input.GetKey(KeyCode.X);
+        gba.Keypad.Left = Input.GetKey(KeyCode.LeftArrow);
+        gba.Keypad.Up = Input.GetKey(KeyCode.UpArrow);
+        gba.Keypad.Right = Input.GetKey(KeyCode.RightArrow);
+        gba.Keypad.Down = Input.GetKey(KeyCode.DownArrow);
+        gba.Keypad.Start = Input.GetKey(KeyCode.KeypadEnter);
+        gba.Keypad.Select = Input.GetKey(KeyCode.Backspace);
+        gba.Keypad.L = Input.GetKey(KeyCode.Q);
+        gba.Keypad.R = Input.GetKey(KeyCode.E);
 
-        SyncToAudio = !(Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Space));
+        SyncToAudio = !(Input.GetKey(KeyCode.Tab) || Input.GetKey(KeyCode.Space));
         // SyncToAudio = false;
 
         if (RunEmulator)
@@ -216,7 +217,7 @@ public class Emulator : MonoBehaviour
             ThreadSync.Set();
         }
 
-        if (Gba.Mem.SaveProvider.Dirty)
+        if (gba.Mem.SaveProvider.Dirty)
         {
             DumpSav();
         }
@@ -229,7 +230,7 @@ public class Emulator : MonoBehaviour
     {
         try
         {
-            System.IO.File.WriteAllBytesAsync(Gba.Provider.SavPath, Gba.Mem.SaveProvider.GetSave());
+            System.IO.File.WriteAllBytesAsync(gba.Provider.SavPath, gba.Mem.SaveProvider.GetSave());
         }
         catch
         {
@@ -238,7 +239,7 @@ public class Emulator : MonoBehaviour
     }
     public unsafe void DrawDisplay()
     {
-        var buf = ShowBackBuf ? Gba.Ppu.Renderer.ScreenBack : Gba.Ppu.Renderer.ScreenFront;
+        var buf = ShowBackBuf ? gba.Ppu.Renderer.ScreenBack : gba.Ppu.Renderer.ScreenFront;
         for (uint i = 0; i < 240 * 160; i++)
         {
             DisplayBuffer[i] = PpuRenderer.ColorLutCorrected[buf[i] & 0x7FFF];

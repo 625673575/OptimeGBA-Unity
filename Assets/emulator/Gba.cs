@@ -31,8 +31,8 @@ namespace OptimeGBA
             Ppu = new PpuGba(this, Scheduler);
             Keypad = new Keypad();
             Dma = new DmaGba(this);
-            Timers = new Timers(GbaAudio, HwControl, Scheduler, false, true);
             HwControl = new HwControlGba(this);
+            Timers = new Timers(GbaAudio, HwControl, Scheduler, false, true);
             Cpu = new Arm7(StateChange, Mem, false, false, null);
 
             Cpu.SetTimingsTable(
