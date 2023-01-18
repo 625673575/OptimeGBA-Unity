@@ -583,7 +583,7 @@ namespace OptimeGBA
             uint mosaicXCounter = BgMosaicX;
 
             // Every byte of these vectors are filled
-            v256 metaVec = new v256((bg.Priority << 8) | (1 << bg.Id));
+            v256 metaVec = new v256((int)((bg.Priority << 8) | (1 << bg.Id)));
 
             for (uint tile = 0; tile < tilesToRender; tile++)
             {
@@ -668,13 +668,13 @@ namespace OptimeGBA
                     }
                 }
 
-                v256 color = Avx2.mm256_i32gather_epi32((void*)((ushort*)palettes + paletteRow * 16), indicesVec, sizeof(ushort));
+                v256 color = Avx2.mm256_i32gather_epi32((int*)((ushort*)palettes + paletteRow * 16), indicesVec, sizeof(ushort));
                 color = Avx2.mm256_and_si256(color, new v256(0xFFFF));
                 // Weave metadata (priority, ID) into color data
                 color = Avx2.mm256_or_si256(color, Avx2.mm256_slli_epi32(metaVec,16));
 
-                ulong addr =(ulong)winMasks + lineIndex;
-                v256 winMask = Avx2.mm256_cvtepu8_epi32(new v128(addr));
+                uint addr =(uint)(winMasks + lineIndex);
+                v256 winMask = Avx2.mm256_cvtepi8_epi32(new v128(addr));
                 winMask = Avx2.mm256_and_si256(winMask, metaVec);
                 winMask = Avx2.mm256_cmpeq_epi32(winMask,new v256((byte)0));
                 // Get important color bits
@@ -686,7 +686,9 @@ namespace OptimeGBA
                 winMask = Avx2.mm256_xor_si256(winMask, new v256(int.MinValue));
 
                 // Push back covered pixels from hi to lo
+                // This render the front image
                 Avx2.mm256_maskstore_epi32((void*)(lo + lineIndex), winMask, Avx2.mm256_stream_load_si256((void*)(hi + lineIndex)));
+                // This render the background, has some bugs
                 Avx2.mm256_maskstore_epi32((void*)(hi + lineIndex), winMask, color);
 
                 pixelX += 8;
