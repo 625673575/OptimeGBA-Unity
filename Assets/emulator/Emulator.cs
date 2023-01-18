@@ -34,6 +34,8 @@ public class Emulator : MonoBehaviour
 
     private void Awake()
     {
+        // must set it to 60 or it won't sync with audio or run too fast.
+        Application.targetFrameRate = 60;
         screen.texture = new Texture2D(240, 160, TextureFormat.RGBA32, false);
     }
     void Start()
