@@ -674,7 +674,7 @@ namespace OptimeGBA
                 color = Avx2.mm256_or_si256(color, Avx2.mm256_slli_epi32(metaVec,16));
 
                 uint addr =(uint)(winMasks + lineIndex);
-                v256 winMask = Avx2.mm256_cvtepi8_epi32(new v128(addr));
+                v256 winMask = Avx2.mm256_cvtepu16_epi32(new v128(addr));
                 winMask = Avx2.mm256_and_si256(winMask, metaVec);
                 winMask = Avx2.mm256_cmpeq_epi32(winMask,new v256((byte)0));
                 // Get important color bits
