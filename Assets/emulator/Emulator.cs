@@ -11,7 +11,9 @@ public class Emulator : MonoBehaviour
 {
     const int FrameCycles = 70224 * 4;
     const int ScanlineCycles = 1232;
-    bool SyncToAudio = true;
+    const float FrameRate = 59.7275f;
+    static bool SyncToAudio = true;
+    const int SampleRate = 32768;
 
     const uint AUDIO_SAMPLE_THRESHOLD = 1024;
     const uint AUDIO_SAMPLE_FULL_THRESHOLD = 1024;
@@ -21,6 +23,7 @@ public class Emulator : MonoBehaviour
     public int ThreadCyclesQueued;
 
     public RawImage screen;
+    AudioSource audioSource;
     uint[] DisplayBuffer = new uint[240 * 160];
     Color32[] DisplayColorBuffer = new Color32[240 * 160];
 
@@ -36,14 +39,17 @@ public class Emulator : MonoBehaviour
     private void Awake()
     {
         // must set it to 60 or it won't sync with audio or run too fast.
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = (int)FrameRate;
+        audioSource = GetComponent<AudioSource>();
+        AudioClip myClip = AudioClip.Create("MySinusoid", SampleRate * 2, 2, SampleRate, true, OnAudioRead);
+        audioSource.clip = myClip;
         screen.texture = new Texture2D(240, 160, TextureFormat.RGBA32, false);
     }
+
     void Start()
     {
-        byte[] bios = System.IO.File.ReadAllBytes(Path.Combine(Application.streamingAssetsPath, "gba_bios.bin"));
-        gba = new Gba(new ProviderGba(bios, new byte[0], "", AudioReady) { BootBios = true });
-        gba.Provider.BootBios = BootBIOS;
+        byte[] bios = File.ReadAllBytes(Path.Combine(Application.streamingAssetsPath, "gba_bios.bin"));
+        gba = new Gba(new ProviderGba(bios, new byte[0], "", AudioReady) { BootBios = BootBIOS });
         EmulationThread = new Thread(EmulationThreadHandler);
         EmulationThread.Name = "Emulation Core";
         EmulationThread.Start();
@@ -52,16 +58,15 @@ public class Emulator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        OnUpdateFrame();
         if (RomLoaded)
         {
             OnRenderFrame();
         }
+        OnUpdateFrame();
     }
 
     private void OnDestroy()
     {
-
         SDL_CloseAudioDevice(AudioDevice);
         SDL_Quit();
     }
@@ -70,18 +75,19 @@ public class Emulator : MonoBehaviour
         string[] paths = SFB.StandaloneFileBrowser.OpenFilePanel("BVA", "", new SFB.ExtensionFilter[] { new SFB.ExtensionFilter("ROM", "gba") }, false);
         if (paths.Length == 0) return;
         LoadRomFromPath(paths[0]);
+        audioSource.Play();
     }
     public void LoadRomFromPath(string path)
     {
-        byte[] rom = System.IO.File.ReadAllBytes(path);
+        byte[] rom = File.ReadAllBytes(path);
         string savPath = path.Substring(0, path.Length - 3) + "sav";
         byte[] sav = new byte[0];
-        if (System.IO.File.Exists(savPath))
+        if (File.Exists(savPath))
         {
             Console.WriteLine(".sav exists, loading");
             try
             {
-                sav = System.IO.File.ReadAllBytes(savPath);
+                sav = File.ReadAllBytes(savPath);
             }
             catch
             {
@@ -102,7 +108,7 @@ public class Emulator : MonoBehaviour
     public void LoadRomAndSave(byte[] rom, byte[] sav, string savPath)
     {
         var bios = gba.Provider.Bios;
-        gba = new Gba(new ProviderGba(bios, rom, savPath, AudioReady) { BootBios = true });
+        gba = new Gba(new ProviderGba(bios, rom, savPath, AudioReady) { BootBios = BootBIOS });
         gba.Mem.SaveProvider.LoadSave(sav);
     }
     public void ResetGba()
@@ -146,6 +152,8 @@ public class Emulator : MonoBehaviour
     {
         return SDL_GetQueuedAudioSize(AudioDevice) / sizeof(short);
     }
+
+
     void AudioReady(short[] data)
     {
         // Don't queue audio if too much is in buffer
@@ -154,11 +162,16 @@ public class Emulator : MonoBehaviour
             int bytes = sizeof(short) * data.Length;
 
             Marshal.Copy(data, 0, AudioTempBufPtr, data.Length);
-
             // Console.WriteLine("Outputting samples to SDL");
 
             SDL_QueueAudio(AudioDevice, AudioTempBufPtr, (uint)bytes);
         }
+    }
+    
+    private void OnAudioRead(float[] data)
+    {
+        //Debug.Log(data.Length);
+        //Marshal.Copy(AudioTempBufPtr, data, 0, 512);
     }
 
     public void RunCycles(int cycles)
@@ -204,13 +217,12 @@ public class Emulator : MonoBehaviour
         gba.Keypad.Up = Input.GetKey(KeyCode.UpArrow);
         gba.Keypad.Right = Input.GetKey(KeyCode.RightArrow);
         gba.Keypad.Down = Input.GetKey(KeyCode.DownArrow);
-        gba.Keypad.Start = Input.GetKey(KeyCode.KeypadEnter);
+        gba.Keypad.Start = Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter);
         gba.Keypad.Select = Input.GetKey(KeyCode.Backspace);
         gba.Keypad.L = Input.GetKey(KeyCode.Q);
         gba.Keypad.R = Input.GetKey(KeyCode.E);
 
         SyncToAudio = !(Input.GetKey(KeyCode.Tab) || Input.GetKey(KeyCode.Space));
-        // SyncToAudio = false;
 
         if (RunEmulator)
         {
@@ -230,14 +242,14 @@ public class Emulator : MonoBehaviour
     {
         try
         {
-            System.IO.File.WriteAllBytesAsync(gba.Provider.SavPath, gba.Mem.SaveProvider.GetSave());
+            File.WriteAllBytesAsync(gba.Provider.SavPath, gba.Mem.SaveProvider.GetSave());
         }
         catch
         {
             Console.WriteLine("Failed to write .sav file!");
         }
     }
-    public unsafe void DrawDisplay()
+    public void DrawDisplay()
     {
         var buf = ShowBackBuf ? gba.Ppu.Renderer.ScreenBack : gba.Ppu.Renderer.ScreenFront;
         for (uint i = 0; i < 240 * 160; i++)

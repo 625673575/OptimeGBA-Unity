@@ -3,10 +3,9 @@ using static OptimeGBA.Bits;
 using System.Runtime.CompilerServices;
 using System;
 using static OptimeGBA.MemoryUtil;
-using Unity.Mathematics;
-using System.Numerics;
 using Unity.Burst.Intrinsics;
 using static Unity.Burst.Intrinsics.X86;
+
 namespace OptimeGBA
 {
     public sealed unsafe class PpuRenderer
@@ -607,7 +606,7 @@ namespace OptimeGBA
                 }
 
                 v256 clearMaskVec;
-                v256 indicesVec = new v256(0U);
+                v256 indicesVec;
                 uint paletteRow = 0;
 
                 if (bg.Use8BitColor)
@@ -671,16 +670,16 @@ namespace OptimeGBA
                 v256 color = Avx2.mm256_i32gather_epi32((int*)((ushort*)palettes + paletteRow * 16), indicesVec, sizeof(ushort));
                 color = Avx2.mm256_and_si256(color, new v256(0xFFFF));
                 // Weave metadata (priority, ID) into color data
-                color = Avx2.mm256_or_si256(color, Avx2.mm256_slli_epi32(metaVec,16));
+                color = Avx2.mm256_or_si256(color, Avx2.mm256_slli_epi32(metaVec, 16));
 
-                uint addr =GetUint(winMasks , lineIndex);
-                v256 winMask = Avx2.mm256_cvtepu16_epi32(new v128(addr));
+                ulong addr = GetUlong(winMasks, lineIndex);
+                v256 winMask = Avx2.mm256_cvtepi8_epi32(new v128(addr));
                 winMask = Avx2.mm256_and_si256(winMask, metaVec);
-                winMask = Avx2.mm256_cmpeq_epi32(winMask,new v256((byte)0));
+                winMask = Avx2.mm256_cmpeq_epi32(winMask, new v256((byte)0));
                 // Get important color bits
                 v256 clear = Avx2.mm256_and_si256(indicesVec, clearMaskVec);
                 // Are those bits clear? 
-                clear = Avx2.mm256_cmpeq_epi32(clear,new v256((byte)0));
+                clear = Avx2.mm256_cmpeq_epi32(clear, new v256(0));
                 // Merge with window mask
                 winMask = Avx2.mm256_or_si256(winMask, clear);
                 winMask = Avx2.mm256_xor_si256(winMask, new v256(int.MinValue));
