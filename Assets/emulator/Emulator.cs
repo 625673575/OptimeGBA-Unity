@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System;
 using static SDL2.SDL;
 using System.Threading;
+using Keiwando.NFSO;
 
 public class Emulator : MonoBehaviour
 {
@@ -72,15 +73,22 @@ public class Emulator : MonoBehaviour
     }
     public void OpenRom()
     {
-        string[] paths = SFB.StandaloneFileBrowser.OpenFilePanel("BVA", "", new SFB.ExtensionFilter[] { new SFB.ExtensionFilter("ROM", "gba") }, false);
-        if (paths.Length == 0) return;
-        LoadRomFromPath(paths[0]);
-        audioSource.Play();
+        SupportedFileType[] supportedFileTypes = { SupportedFileType.Any };
+        NativeFileSO.shared.OpenFile(supportedFileTypes, delegate (bool fileWasOpened, OpenedFile file)
+  {
+      if (fileWasOpened)
+      {
+          LoadRom(file.Data, file.Name);
+      }
+      else
+      {
+          // The file selection was cancelled.	
+      }
+  });
     }
-    public void LoadRomFromPath(string path)
+    public void LoadRom(byte[] rom, string name)
     {
-        byte[] rom = File.ReadAllBytes(path);
-        string savPath = path.Substring(0, path.Length - 3) + "sav";
+        string savPath = Application.persistentDataPath + "/" + name.Substring(0, name.Length - 3) + "sav";
         byte[] sav = new byte[0];
         if (File.Exists(savPath))
         {
@@ -167,7 +175,7 @@ public class Emulator : MonoBehaviour
             SDL_QueueAudio(AudioDevice, AudioTempBufPtr, (uint)bytes);
         }
     }
-    
+
     private void OnAudioRead(float[] data)
     {
         //Debug.Log(data.Length);
