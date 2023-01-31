@@ -63,7 +63,7 @@ namespace OptimeGBA
         {
             if (Gba.Dma.DmaLock)
             {
-                // Console.WriteLine("[EEPROM] Read from DMA");
+                // Debug.Log("[EEPROM] Read from DMA");
             }
 
             byte val = 0;
@@ -72,7 +72,7 @@ namespace OptimeGBA
                 if (ReadBitsRemaining <= 64)
                 {
                     val = ReadBitEEPROM();
-                    // Console.WriteLine($"[EEPROM] Read (addr: {Util.Hex(ReadAddr, 4)}) {val}, bits remaining: " + ReadBitsRemaining);
+                    // Debug.Log($"[EEPROM] Read (addr: {Util.Hex(ReadAddr, 4)}) {val}, bits remaining: " + ReadBitsRemaining);
                     ReadAddr++;
                 }
                 else
@@ -94,7 +94,7 @@ namespace OptimeGBA
         {
             if (Gba.Dma.DmaLock)
             {
-                // Console.WriteLine("[EEPROM] Write from DMA");
+                // Debug.Log("[EEPROM] Write from DMA");
             }
 
             bool bit = BitTest(val, 0);
@@ -103,7 +103,7 @@ namespace OptimeGBA
                 case EepromState.Ready:
                     if (bit)
                     {
-                        // Console.WriteLine("[EEPROM] Request started");
+                        // Debug.Log("[EEPROM] Request started");
                         State = EepromState.StartRequest;
                     }
                     break;
@@ -111,13 +111,13 @@ namespace OptimeGBA
                     BitsRemaining = Size == EepromSize.Eeprom64k ? 14U : 6U;
                     if (bit)
                     {
-                        // Console.WriteLine("[EEPROM] Receiving read address");
+                        // Debug.Log("[EEPROM] Receiving read address");
                         State = EepromState.ReceiveAddrForRead;
                         ReadAddr = 0;
                     }
                     else
                     {
-                        // Console.WriteLine("[EEPROM] Receiving write address");
+                        // Debug.Log("[EEPROM] Receiving write address");
                         State = EepromState.ReceiveAddrForWrite;
                         Addr = 0;
                     }
@@ -130,11 +130,11 @@ namespace OptimeGBA
                         ReadAddr &= 0x3FF;
 
                         BitsRemaining--;
-                        // Console.WriteLine($"[EEPROM] Setting read address ({bit}), bits remaining: {BitsRemaining}");
+                        // Debug.Log($"[EEPROM] Setting read address ({bit}), bits remaining: {BitsRemaining}");
 
                         if (BitsRemaining == 0)
                         {
-                            // Console.WriteLine("[EEPROM] Read address written: " + Util.Hex(ReadAddr, 4));
+                            // Debug.Log("[EEPROM] Read address written: " + Util.Hex(ReadAddr, 4));
                             State = EepromState.ReceiveTerminatingZero;
                             BitsRemaining = 68;
                             ReadBitsRemaining = 68;
@@ -149,13 +149,13 @@ namespace OptimeGBA
                         Addr &= 0x3FF;
 
                         BitsRemaining--;
-                        // Console.WriteLine($"[EEPROM] Setting write address ({bit}), bits remaining: {BitsRemaining}");
+                        // Debug.Log($"[EEPROM] Setting write address ({bit}), bits remaining: {BitsRemaining}");
 
                         if (BitsRemaining == 0)
                         {
                             BitsRemaining = 64;
                             State = EepromState.ReceiveDataForWrite;
-                            // Console.WriteLine("[EEPROM] Write address set: " + Util.Hex(Addr, 4));
+                            // Debug.Log("[EEPROM] Write address set: " + Util.Hex(Addr, 4));
                         }
                     }
                     break;
@@ -163,20 +163,20 @@ namespace OptimeGBA
                     if (BitsRemaining > 0)
                     {
                         WriteBitEEPROM(bit);
-                        // Console.WriteLine($"[EEPROM] Write (addr: {Util.Hex(Addr, 4)}) {Convert.ToByte(bit)}, bits remaining: " + BitsRemaining);
+                        // Debug.Log($"[EEPROM] Write (addr: {Util.Hex(Addr, 4)}) {Convert.ToByte(bit)}, bits remaining: " + BitsRemaining);
                         Addr++;
                         BitsRemaining--;
 
                         if (BitsRemaining == 0)
                         {
-                            // Console.WriteLine($"[EEPROM] Write finished");
+                            // Debug.Log($"[EEPROM] Write finished");
                             State = EepromState.Ready;
                         }
                     }
                     break;
                 case EepromState.ReceiveTerminatingZero:
                     State = EepromState.Ready;
-                    // Console.WriteLine($"[EEPROM] Received terminating zero");
+                    // Debug.Log($"[EEPROM] Received terminating zero");
                     break;
             }
         }

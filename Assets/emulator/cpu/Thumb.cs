@@ -1032,7 +1032,7 @@ namespace OptimeGBA
                     arm7.R[15] = arm7.Read32(addr & ~3u);
                     arm7.FlushPipeline();
                 }
-                System.Console.WriteLine("POP empty Rlist");
+                //Debug.Log("POP empty Rlist");
                 arm7.R[13] += 0x40;
             }
 

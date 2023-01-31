@@ -231,10 +231,10 @@ namespace OptimeGBA
                 if (c.DmaLength == 0) c.DmaLength = 0x4000;
             }
 
-            // Console.WriteLine($"Starting DMA {ci}");
-            // Console.WriteLine($"SRC: {Util.HexN(srcAddr, 7)}");
-            // Console.WriteLine($"DEST: {Util.HexN(destAddr, 7)}");
-            // Console.WriteLine($"LENGTH: {Util.HexN(c.DmaLength, 4)}");
+            // Debug.Log($"Starting DMA {ci}");
+            // Debug.Log($"SRC: {Util.HexN(srcAddr, 7)}");
+            // Debug.Log($"DEST: {Util.HexN(destAddr, 7)}");
+            // Debug.Log($"LENGTH: {Util.HexN(c.DmaLength, 4)}");
 
             int destOffsPerUnit;
             int sourceOffsPerUnit;

@@ -11,7 +11,7 @@ static class Util
 
     public static void WriteDebug(string text)
     {
-        // Console.WriteLine(text);
+        // Debug.Log(text);
     }
 
     public static string Pad(string n, int width, char padChar)

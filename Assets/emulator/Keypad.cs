@@ -48,7 +48,7 @@ namespace OptimeGBA
                     if (!DebugButton) val = BitSet(val, 3);
                     if (!Touch) val = BitSet(val, 6);
                     if (!ScreensOpen) val = BitSet(val, 7);
-                    // System.Console.WriteLine(Util.Hex(val, 2));
+                    // System.Debug.Log(Util.Hex(val, 2));
                     break;
                 case 0x4000137: // EXTKEYIN B1
                     val = 0;

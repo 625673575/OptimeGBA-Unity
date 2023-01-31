@@ -45,7 +45,7 @@ namespace OptimeGBA
                     break;
 
                 default:
-                    // Console.WriteLine($"UNIMPLEMENTED TO CP15 {opcode1},C{cRn},C{cRm},{opcode2}: {HexN(rdVal, 8)}");
+                    // Debug.Log($"UNIMPLEMENTED TO CP15 {opcode1},C{cRn},C{cRm},{opcode2}: {HexN(rdVal, 8)}");
                     break;
 
             }
@@ -75,7 +75,7 @@ namespace OptimeGBA
                     break;
 
                 default:
-                    Console.WriteLine($"UNIMPLEMENTED FROM CP15 {opcode1},C{cRn},C{cRm},{opcode2}");
+                    //Debug.Log($"UNIMPLEMENTED FROM CP15 {opcode1},C{cRn},C{cRm},{opcode2}");
                     break;
             }
 

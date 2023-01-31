@@ -65,7 +65,7 @@ namespace OptimeGBA
             }
         breakOuterLoop:
 
-            Console.WriteLine($"Save Type: {strings[matchedIndex]}");
+            //Debug.Log($"Save Type: {strings[matchedIndex]}");
 
             switch (matchedIndex)
             {
@@ -80,7 +80,7 @@ namespace OptimeGBA
                     {
                         EepromThreshold = 0x1FFFF00;
                     }
-                    Console.WriteLine("EEPROM Threshold: " + Util.Hex(EepromThreshold, 8));
+                    //Debug.Log("EEPROM Threshold: " + Util.Hex(EepromThreshold, 8));
                     break;
                 case 2: SaveProvider = new Sram(); break;
                 case 3: SaveProvider = new Flash(Gba, FlashSize.Flash512k); break;
@@ -177,7 +177,7 @@ namespace OptimeGBA
 
         ~MemoryGba()
         {
-            Console.WriteLine("Cleaning up GBA memory...");
+            //Debug.Log("Cleaning up GBA memory...");
             UnpinByteArray(Bios);
             UnpinByteArray(Ewram);
             UnpinByteArray(Iwram);

@@ -132,11 +132,6 @@ namespace OptimeGBA
             Mem.InitPageTables();
             Cpu.InitFlushPipeline();
 
-#if UNSAFE
-            Console.WriteLine("Starting in memory UNSAFE mode");
-#else
-            Console.WriteLine("Starting in memory SAFE mode");
-#endif
         }
 
         public uint Step()

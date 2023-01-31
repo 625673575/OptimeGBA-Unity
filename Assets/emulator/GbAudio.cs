@@ -940,11 +940,11 @@ namespace OptimeGBA
                     this.enabled = true;
                     this.frameSequencerStep = 0;
 
-                    // Console.WriteLine("Enabled PSGs!");
+                    // Debug.Log("Enabled PSGs!");
                 }
                 else
                 {
-                    // Console.WriteLine("Disabled PSGs...");
+                    // Debug.Log("Disabled PSGs...");
 
                     // Disable and write zeros on everything upon main disabling
                     this.noise_enabled = false;

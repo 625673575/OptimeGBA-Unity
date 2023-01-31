@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace OptimeGBA
@@ -207,6 +208,47 @@ namespace OptimeGBA
         public static short SignExtend16(ushort val, int pos)
         {
             return (short)(((short)val << (15 - pos)) >> (15 - pos));
+        }
+        public static byte[] FloatArrayToByteBuffer(float[] datas)
+        {
+            byte[] result = new byte[datas.Length * 4];
+            for (int i = 0; i < datas.Length; i++)
+            {
+                byte[] signalBytes = BitConverter.GetBytes(datas[i]);
+                result[4 * i] = signalBytes[0];
+                result[4 * i + 1] = signalBytes[1];
+                result[4 * i + 2] = signalBytes[2];
+                result[4 * i + 3] = signalBytes[3];
+            }
+
+            return result;
+        }
+        public static float[] ByteToFloatArray(byte[] srcByte)
+        {
+            unsafe
+            {
+                int FLOATLEN = sizeof(float);
+                int srcLen = srcByte.Length;
+                int dstLen = srcLen / FLOATLEN;
+                float[] dstFloat = new float[dstLen];
+                for (int i = 0; i < dstLen; i++)
+                {
+                    float temp = 0.0F;
+                    void* pf = &temp;
+                    fixed (byte* pxb = srcByte)
+                    {
+                        byte* px = pxb;
+                        px += i * FLOATLEN;
+
+                        for (int j = 0; j < FLOATLEN; j++)
+                        {
+                            *((byte*)pf + j) = *(px + j);
+                        }
+                        dstFloat[i] = temp;
+                    }
+                }
+                return dstFloat;
+            }
         }
     }
 }

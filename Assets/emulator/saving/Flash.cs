@@ -90,7 +90,7 @@ namespace OptimeGBA
                 }
             }
 
-            // Console.WriteLine("Flash.Read8 addr:" + HexN(addr, 8) + " val:" + HexN(val, 2));
+            // Debug.Log("Flash.Read8 addr:" + HexN(addr, 8) + " val:" + HexN(val, 2));
             // Gba.Arm7.Error("read");
 
             return val;
@@ -127,14 +127,14 @@ namespace OptimeGBA
                 case FlashState.InitialState:
                     if (addr == 0xE005555 && val == 0xAA)
                     {
-                        // Console.WriteLine("pre-command 0 sent");
+                        // Debug.Log("pre-command 0 sent");
                         State = FlashState.PreCommand0;
                     }
                     break;
                 case FlashState.PreCommand0:
                     if (addr == 0xE002AAA && val == 0x55)
                     {
-                        // Console.WriteLine("pre-command 1 sent, ready to receive commands");
+                        // Debug.Log("pre-command 1 sent, ready to receive commands");
                         State = FlashState.PreCommand1;
                     }
                     break;
@@ -147,24 +147,24 @@ namespace OptimeGBA
                                 switch (val)
                                 {
                                     case 0x90:
-                                        // Console.WriteLine("enter identification mode");
+                                        // Debug.Log("enter identification mode");
                                         IdentificationMode = true;
                                         break;
                                     case 0xF0:
-                                        // Console.WriteLine("exit identification mode");
+                                        // Debug.Log("exit identification mode");
                                         // Gba.Arm7.Error("here");
                                         IdentificationMode = false;
                                         break;
                                     case 0x80:
-                                        // Console.WriteLine("preparing to erase");
+                                        // Debug.Log("preparing to erase");
                                         StateSecondary = FlashStateSecondary.PrepareEraseCommand;
                                         break;
                                     case 0xB0:
-                                        // Console.WriteLine("preparing to set bank");
+                                        // Debug.Log("preparing to set bank");
                                         PrepareSetBank = true;
                                         break;
                                     case 0xA0:
-                                        // Console.WriteLine("preparing to write");
+                                        // Debug.Log("preparing to write");
                                         PrepareWrite = true;
                                         break;
                                 }

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Collections.Concurrent;
-using static OptimeGBA.Bits;
 using System.Runtime.InteropServices;
 using static OptimeGBA.MemoryUtil;
 

@@ -319,7 +319,7 @@ namespace OptimeGBA
         const int CyclesPerSample = 16777216 / SampleRate;
         // public CircularBuffer<short> SampleBuffer = new CircularBuffer<short>(32768, 0);
         public const uint SampleBufferMax = 256;
-        public short[] SampleBuffer = new short[SampleBufferMax];
+        public float[] SampleBuffer = new float[SampleBufferMax];
         public uint SampleBufferPos = 0;
         public bool AudioReady;
 
@@ -409,8 +409,8 @@ namespace OptimeGBA
                 VisBufB.Insert(CurrentValueB);
             }
 
-            SampleBuffer[SampleBufferPos++] = (short)((fifoA + psgA) * 64);
-            SampleBuffer[SampleBufferPos++] = (short)((fifoB + psgB) * 64);
+            SampleBuffer[SampleBufferPos++] = ((fifoA + psgA) * 64f)/ SampleRate;
+            SampleBuffer[SampleBufferPos++] = ((fifoB + psgB) * 64f)/ SampleRate;
 
             if (SampleBufferPos >= SampleBufferMax)
             {

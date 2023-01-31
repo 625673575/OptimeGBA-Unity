@@ -126,8 +126,7 @@ namespace OptimeGBA
             
             if (sample < CurrentSampleOutPos)
             {
-                Console.Error.WriteLine("Tried to set amplitude backward in time!");
-                Console.WriteLine(System.Environment.StackTrace);
+                //Console.WriteLine("Tried to set amplitude backward in time!");
             }
 
             ChannelSample[channel] = sample;

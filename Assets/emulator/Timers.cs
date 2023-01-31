@@ -103,7 +103,7 @@ namespace OptimeGBA
                 Reload();
                 Timers.Scheduler.AddEventRelative(GetSchedulerId(), CalculateOverflowCycles(), TimerOverflow);
                 EnableCycles = CalculateAlignedCurrentTicks();
-                // Console.WriteLine($"[Timer] {Id} Enable");
+                // Debug.Log($"[Timer] {Id} Enable");
             }
 
             Enabled = true;
@@ -212,7 +212,7 @@ namespace OptimeGBA
             }
 
             EnableCycles = CalculateAlignedCurrentTicks() - cyclesLate;
-            // Console.WriteLine($"[Timer] {Id} Overflow");
+            // Debug.Log($"[Timer] {Id} Overflow");
         }
 
         public void UnscheduledTimerIncrement()
