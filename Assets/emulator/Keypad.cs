@@ -14,14 +14,6 @@ namespace OptimeGBA
         public bool Down;
         public bool R;
         public bool L;
-
-        // DS Exclusive
-        public bool X;
-        public bool Y;
-        public bool DebugButton;
-        public bool Touch;
-        public bool ScreensOpen = true; // DS folded
-
         public byte ReadHwio8(uint addr)
         {
             byte val = 0;
@@ -42,14 +34,6 @@ namespace OptimeGBA
                     if (!L) val = BitSet(val, 9 - 8);
                     break;
 
-                case 0x4000136: // EXTKEYIN - ARM7 only
-                    if (!X) val = BitSet(val, 0);
-                    if (!Y) val = BitSet(val, 1);
-                    if (!DebugButton) val = BitSet(val, 3);
-                    if (!Touch) val = BitSet(val, 6);
-                    if (!ScreensOpen) val = BitSet(val, 7);
-                    // System.Debug.Log(Util.Hex(val, 2));
-                    break;
                 case 0x4000137: // EXTKEYIN B1
                     val = 0;
                     break;

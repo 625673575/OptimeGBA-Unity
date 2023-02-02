@@ -2,10 +2,11 @@ using UnityEngine.UI;
 using UnityEngine;
 using OptimeGBA;
 using System.IO;
-using System.Runtime.InteropServices;
 using System;
 using System.Threading;
 using Keiwando.NFSO;
+using System.Runtime.InteropServices;
+using UnityEngine.XR;
 
 public class Emulator : MonoBehaviour
 {
@@ -35,12 +36,18 @@ public class Emulator : MonoBehaviour
     private byte[] _buffer;
     public float audioGain = 1.0f;
 
+    // key delegate
+    public delegate bool IsKeyPressed(GBAKeyCode keyCode);
+    public IsKeyPressed KeyPressed;
+
     private void Awake()
     {
         BetterStreamingAssets.Initialize();
         // must set it to 60 or it won't sync with audio or run too fast.
         Application.targetFrameRate = (int)FrameRate;
         audioSource = GetComponent<AudioSource>();
+        AudioClip clip = AudioClip.Create("blank", GbaAudio.SampleRate * 2, 2, GbaAudio.SampleRate, true);
+        audioSource.clip = clip;
         audioSource.playOnAwake = true;
         audioSource.enabled = false;
         screen.texture = new Texture2D(240, 160, TextureFormat.RGBA32, false);
@@ -49,7 +56,9 @@ public class Emulator : MonoBehaviour
         AudioSettings.GetDSPBufferSize(out int bufferLength, out _);
         _samplesAvailable = bufferLength;
         // Must be set to 32768
-        AudioSettings.outputSampleRate = GbaAudio.SampleRate;
+        var audioConfig = AudioSettings.GetConfiguration();
+        audioConfig.sampleRate = GbaAudio.SampleRate;
+        AudioSettings.Reset(audioConfig);
         // Prepare our buffer
         _pipeStream = new PipeStream();
         _pipeStream.MaxBufferLength = _samplesAvailable * 2 * sizeof(float);
@@ -80,14 +89,17 @@ public class Emulator : MonoBehaviour
         SupportedFileType[] supportedFileTypes = { SupportedFileType.Any };
         NativeFileSO.shared.OpenFile(supportedFileTypes, delegate (bool fileWasOpened, OpenedFile file)
   {
-      if (fileWasOpened)
+      if (fileWasOpened && file != null)
       {
           LoadRom(file.Data, file.Name);
       }
       else
       {
           // The file selection was cancelled.	
-          Debug.LogError($"Open file failed{file.Name}");
+          if (file == null)
+              Debug.LogError("file is null");
+          else
+              Debug.LogError($"Open file failed{file.Name}");
       }
   });
     }
@@ -208,21 +220,17 @@ public class Emulator : MonoBehaviour
 
     public void OnUpdateFrame()
     {
-        gba.Keypad.B = Input.GetKey(KeyCode.Z);
-        gba.Keypad.A = Input.GetKey(KeyCode.X);
-        gba.Keypad.Left = Input.GetKey(KeyCode.LeftArrow);
-        gba.Keypad.Up = Input.GetKey(KeyCode.UpArrow);
-        gba.Keypad.Right = Input.GetKey(KeyCode.RightArrow);
-        gba.Keypad.Down = Input.GetKey(KeyCode.DownArrow);
-        gba.Keypad.Start = Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter);
-        gba.Keypad.Select = Input.GetKey(KeyCode.Backspace);
-        gba.Keypad.L = Input.GetKey(KeyCode.Q);
-        gba.Keypad.R = Input.GetKey(KeyCode.E);
-        if (KeyStart)
-        {
-            gba.Keypad.Start = true;
-            KeyStart = false;
-        }
+        gba.Keypad.B = KeyPressed(GBAKeyCode.B);
+        gba.Keypad.A = KeyPressed(GBAKeyCode.A);
+        gba.Keypad.Left = KeyPressed(GBAKeyCode.Left);
+        gba.Keypad.Up = KeyPressed(GBAKeyCode.Up);
+        gba.Keypad.Right = KeyPressed(GBAKeyCode.Right);
+        gba.Keypad.Down = KeyPressed(GBAKeyCode.Down);
+        gba.Keypad.Start = KeyPressed(GBAKeyCode.Start);
+        gba.Keypad.Select = KeyPressed(GBAKeyCode.Select);
+        gba.Keypad.L = KeyPressed(GBAKeyCode.L);
+        gba.Keypad.R = KeyPressed(GBAKeyCode.R);
+
         SyncToAudio = !(Input.GetKey(KeyCode.Tab) || Input.GetKey(KeyCode.Space));
 
         if (RunEmulator)
@@ -253,35 +261,22 @@ public class Emulator : MonoBehaviour
     public void DrawDisplay()
     {
         var buf = ShowBackBuf ? gba.Ppu.Renderer.ScreenBack : gba.Ppu.Renderer.ScreenFront;
-        for (uint i = 0; i < 240 * 160; i++)
+        unsafe
         {
-            DisplayBuffer[i] = PpuRenderer.ColorLutCorrected[buf[i] & 0x7FFF];
-            DisplayColorBuffer[i] = new Color32(
-                Bits.GetByteIn(DisplayBuffer[i], 0),
-                Bits.GetByteIn(DisplayBuffer[i], 1),
-                Bits.GetByteIn(DisplayBuffer[i], 2),
-                Bits.GetByteIn(DisplayBuffer[i], 3)
-                );
+            for (uint i = 0; i < 240 * 160; i++)
+            {
+                DisplayBuffer[i] = PpuRenderer.ColorLutCorrected[buf[i] & 0x7FFF];
+                fixed (uint* p = &DisplayBuffer[i])
+                {
+                    byte* bp = (byte*)p;
+                    DisplayColorBuffer[i] = new Color32(*(bp++), *(bp++), *(bp++), *(bp++));
+                }
+            }
         }
+
         //默认贴图需要反转Y
         Texture2D tex = screen.texture as Texture2D;
         tex.SetPixels32(DisplayColorBuffer);
         tex.Apply(false);
     }
-
-    #region KeyMap
-    public bool KeyStart;
-    public void Button_Start()
-    {
-        KeyStart = true;
-    }
-    public void Button_A()
-    {
-        gba.Keypad.A = true;
-    }
-    public void Button_B()
-    {
-        gba.Keypad.B = true;
-    }
-    #endregion
 }
