@@ -16,7 +16,7 @@ public class Emulator : MonoBehaviour
     static bool SyncToAudio = true;
 
 
-    public RawImage screen;
+    public Renderer screenRenderer;
     AudioSource audioSource;
     uint[] DisplayBuffer = new uint[240 * 160];
     Color32[] DisplayColorBuffer = new Color32[240 * 160];
@@ -50,7 +50,7 @@ public class Emulator : MonoBehaviour
         audioSource.clip = clip;
         audioSource.playOnAwake = true;
         audioSource.enabled = false;
-        screen.texture = new Texture2D(240, 160, TextureFormat.RGBA32, false);
+        screenRenderer.material.mainTexture = new Texture2D(240, 160, TextureFormat.RGBA32, false, false);
 
         // Get Unity Buffer size
         AudioSettings.GetDSPBufferSize(out int bufferLength, out _);
@@ -275,7 +275,7 @@ public class Emulator : MonoBehaviour
         }
 
         //默认贴图需要反转Y
-        Texture2D tex = screen.texture as Texture2D;
+        Texture2D tex = screenRenderer.material.mainTexture as Texture2D;
         tex.SetPixels32(DisplayColorBuffer);
         tex.Apply(false);
     }
