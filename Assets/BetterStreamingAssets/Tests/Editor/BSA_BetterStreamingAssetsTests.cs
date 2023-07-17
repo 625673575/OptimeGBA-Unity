@@ -237,6 +237,7 @@ namespace Better.StreamingAssets
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
         }
 
+        #if UNITY_ANDROID
         [MenuItem("Assets/Better Streaming Assets/Convert AAB to APKS")]
         public static void ConvertAABToAPKS()
         {
@@ -514,7 +515,6 @@ namespace Better.StreamingAssets
         {
             Assert.Throws<IOException>(() => BetterStreamingAssets.GetFiles(dir, null, SearchOption.TopDirectoryOnly));
         }
-
         private void TestGetFiles(string dir, string pattern, SearchOption opt, int minCount, int maxCount)
         {
             var files = GetRealFiles(dir, pattern, opt)
@@ -528,6 +528,7 @@ namespace Better.StreamingAssets
 
             CollectionAssert.AreEqual(files, otherFiles);
         }
+        #endif
 
         private static string[] GetRealFiles(string nested, string pattern, SearchOption so, bool dirs = false)
         {

@@ -68,6 +68,7 @@ namespace OptimeGBA
                     ReloadVal &= 0x00FF;
                     ReloadVal |= ((uint)val << 8);
                     RecalculateInterval();
+
                     break;
                 case 0x02: // TMCNT_H B0
                     PrescalerSel = (uint)(val & 0b11);
